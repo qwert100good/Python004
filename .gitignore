@@ -136,3 +136,6 @@ dmypy.json
 *.iws
 .idea/
 out/
+
+# requirement.txt
+requirements.txt
