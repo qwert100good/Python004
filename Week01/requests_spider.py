@@ -9,20 +9,6 @@ headers = {}
 
 url = 'https://maoyan.com/films?showType=3'
 
-# UA_LIST = [
-#     # Windows Chrome
-#     'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
-#     # MAC Chrome
-#     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.121 Safari/537.36',
-#     # Windows Firefox
-#     'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:46.0) Gecko/20100101 Firefox/46.0',
-#     # MAC Firefox
-#     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:46.0) Gecko/20100101 Firefox/46.0',
-#     # Safari
-#     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/7046A194A'
-# ]
-# headers['User-Agent'] = random.choice(UA_LIST)
-
 ua = UserAgent(verify_ssl=False)
 headers['User-Agent'] = ua.random
 headers['Cookie'] = 'uuid=33929200FC2311EA80FE9D7A0DEA9847193839B878A146A8AB40EB4D436373A6'
@@ -33,7 +19,6 @@ ip = random.choice(ip_pool)
 proxies = {'http:':ip}
 resp = requests.get(url, headers=headers,proxies=proxies)
 
-# resp = requests.get(url, headers=headers)
 html = resp.text
 
 movie_list = bs4(html, 'html.parser').find_all('div', attrs={'class': 'movie-hover-info'})
