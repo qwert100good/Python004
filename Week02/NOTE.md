@@ -122,3 +122,160 @@ cur.executemany(sql,values)
 conn.commit()
 
 ```
+## 反爬虫
+### 浏览器基本行为
+1. 带http头信息： User-Agent、Referer等
+2. 带cookies(包含加密的用户名和密码验证信息)
+#### 设置随机浏览器User-Agent
+```python
+from fake_useragent import UserAgent
+
+ua = UserAgent(verify_ssl=False)
+# ua.chrome
+# ua.safari
+# ua.ie
+
+# 随机返回头部信息
+User_Agent = ua.random
+```
+设置Host或Referer内容添加到Headers中
+
+#### 设置cookies
+模拟用户登录
+- requests通过session，先请求登录的url(post)，使session携带登录的cookies信息，再进行其他页面的请求
+- scrapy通过start_url处理一次的方式，先请求登录的url(post)
+
+#### 通过selenium的webdriver模拟浏览器行为
+```python
+from selenium import webdriver
+# 需要配置对应浏览期的webdriver
+browser = webdriver.Chrome()
+```
+## 文件下载
+### 小文件直接读取存储
+```python
+import requests
+# 小文件
+image_url = 'xxxx.png'
+r = requests.get(image_url)
+with open('a.png','wb') as f:
+    f.write(r.content)
+```
+### 大文件使用文件流方式
+```python
+import requests
+pdf_url = 'xxx.pdf'
+r = requests.get(pdf_url,stream=True)
+
+with open('test.pdf','wb') as pdf:
+    # iter_content方法为content的生成器
+    for chunk in r.iter_content(chunk_size=1024):
+        if chunk:
+            pdf.write(chunk)
+```
+## 验证码识别
+
+### 环境配置
+#### 安装tesseract
+选择想要的版本安装 [下载地址](https://digi.bib.uni-mannheim.de/tesseract/?C=M;O=D)
+#### 安装python依赖包
+```shell script
+pip install Pillow pytesseract
+```
+
+#### 处理验证码
+利用Pillow对验证码图片进行灰度、二值化、降噪处理
+使用pytesseract包调用tesseract对验证码图像进行识别
+```python
+from PIL import Image
+import pytesseract
+
+im = Image.open('demo.jpg')
+
+# 灰度处理
+gray = im.convert('L')
+
+# 二值化
+threshold = 100
+table = []
+for i in range(256):
+    if i < threshold:
+        table.append(0)
+    else:
+        table.append(1)
+out = gray.point(table, '1')
+
+print(pytesseract.image_to_string(out, lang='chi_sim+eng'))
+
+im.close()
+```
+识别不同类型的验证码，需要导入不同的训练集合。
+[训练集](https://github.com/tesseract-ocr/tessdata)
+下载后导入到 tesseract\tessdata 目录
+## Scrapy代理设置
+### 使用系统代理IP(只能代理一个ip)
+1. export http_proxy = 'http://xxx.xxx.xxx.xxx:xx'(Linux,Mac),windows set http_proxy=xxx
+2. setting增加scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware
+3. 通过 Request.meta['proxy'] 读取 http_proxy 环境变量加载代理
+4. 直接在构造Request对象时传入meta['proxy]参数，进行代理
+
+### 使用自定义中间件方法设置代理IP
+下载中间件
+```python
+def process_request(request,spider):
+    # request 对象经过下载中间件时会被调用，优先级高先调用
+    pass
+def process_response(request,response,spider):
+    # response 对象经过下载中间件时会被调用，优先级高后调用
+    pass
+def process_exception(request,exception,spider):
+    # 当process_response()和process_request()抛出异常时会被调用
+    pass
+def from_crawler(cls,crawler):
+    # 使用 crawler 来创建中间器对象，并（必须）返回一个中间件对象
+    pass
+```
+#### 继承系统的HttpProxyMiddleware，并且重写其中的from_crawler、__init__(self)、_set_proxy方法
+```python
+import random
+from collections import defaultdict
+from urllib.parse import urlparse
+from scrapy.downloadermiddlewares.httpproxy import HttpProxyMiddleware
+from scrapy.exceptions import NotConfigured
+
+class RandomHttpProxyMiddleware(HttpProxyMiddleware):
+    # 该中间件初始化方法，处理self.proxies属性
+    def __init__(self,auth_encoding='utf-8',proxy_list=None):
+        self.proxies = defaultdict(list)
+        for proxy in proxy_list:
+            parse = urlparse(proxy)
+            self.proxies[parse.scheme].append(proxy)
+    
+    # 读取配置文件，当作参数传入中间件的初始化方法中
+    @classmethod
+    def from_crawler(cls, crawler):
+        if not crawler.settings.get('HTTP_PROXY_LIST'):
+            raise NotConfigured
+
+        http_proxy_list = crawler.settings.get('HTTP_PROXY_LIST')
+        auth_encoding = crawler.settings.get('HTTPPROXY_AUTH_ENCODING','utf-8')
+        return cls(auth_encoding,http_proxy_list)
+    
+    # 随机选取self.proxies中的代理IP，写入request.meta中
+    def _set_proxy(self, request, scheme):
+        proxy = random.choice(self.proxies[scheme])
+        request.meta['proxy'] = proxy
+```
+#### 在settings配置文件中写入对应的代理IP列表并且添加自定义中间件
+```python
+HTTP_PROXY_LIST = [
+   'http://124.205.155.152:9090',
+   'http://115.171.85.189:8118',
+   'http://124.205.155.154:9090'
+]
+
+DOWNLOADER_MIDDLEWARES = {
+   'proxyspider.middlewares.ProxyspiderDownloaderMiddleware': 543,
+   'proxyspider.middlewares.RandomHttpProxyMiddleware':400,
+}
+```
