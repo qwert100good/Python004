@@ -5,8 +5,10 @@
 
 
 # useful for handling different item types with a single interface
+import datetime
 import os
 
+import pymysql
 from itemadapter import ItemAdapter
 
 
@@ -31,3 +33,40 @@ class MaoyanPipeline:
 
     def close_spider(self,spider):
         self.f.close()
+
+class MaoyanMySQLPipeline:
+    def __init__(self,conn):
+        self.conn = conn
+        self.cursor = self.conn.cursor()
+        self.movie_info_list = []
+
+    # MySQL配置存放在settings配置文件中，通过该方法读取构造mysql连接
+    @classmethod
+    def from_settings(cls, settings):
+        db_config = dict(
+            host=settings['MYSQL_HOST'],
+            port=settings['MYSQL_PORT'],
+            db=settings['MYSQL_DBNAME'],
+            user=settings['MYSQL_USER'],
+            password=settings['MYSQL_PASSWORD'])
+        conn = pymysql.connect(**db_config)
+        return cls(conn)
+
+    def process_item(self,item,spider):
+        movie_name = item['movie_name']
+        movie_type = item['movie_type']
+        movie_release_time = item['movie_release_time']
+        self.movie_info_list.append([movie_name,movie_type,movie_release_time])
+        return item
+
+    def close_spider(self, spider):
+        insert_sql = 'INSERT INTO movie_info(`name`,`type`,`release_time`,`create_time`) VALUES (%s,%s,%s,%s)'
+        create_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        movie_info_list = [tuple(row + [create_time]) for row in self.movie_info_list]
+        try:
+            self.cursor.executemany(insert_sql, movie_info_list)
+            self.conn.commit()
+        except:
+            self.conn.rollback()
+        self.cursor.close()
+        self.conn.close()

@@ -75,8 +75,17 @@ HTTP_PROXY_LIST = [
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'maoyan.pipelines.MaoyanPipeline': 300,
+   # 'maoyan.pipelines.MaoyanPipeline': 300,
+    'maoyan.pipelines.MaoyanMySQLPipeline':300
 }
+
+
+MYSQL_HOST = 'localhost'
+MYSQL_PORT = 3306
+MYSQL_USER = 'root'
+MYSQL_PASSWORD = '123456'
+MYSQL_DBNAME = 'w2h1'
+
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
