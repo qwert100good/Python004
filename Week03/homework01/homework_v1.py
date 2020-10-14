@@ -60,28 +60,28 @@ class DiningPhilosopher(threading.Thread):
     def _pickLeftFork(self):
         self.fork_locks[self.left_fork_num].acquire()
         self.q.put([self.philosopher_num, 1, 1])
-        print(f'{self.philosopher_name} pickLeftFork')
+        print(f'philosopher {self.philosopher_num} pickLeftFork')
 
     def _pickRightFork(self):
         self.fork_locks[self.right_fork_num].acquire()
         self.q.put([self.philosopher_num, 2, 1])
-        print(f'{self.philosopher_name} pickRightFork')
+        print(f'philosopher {self.philosopher_num} pickRightFork')
 
     def _eat(self):
         eat_time = random.randint(1, 3) / 100
         time.sleep(eat_time)
         self.q.put([self.philosopher_num, 0, 3])
-        print(f'{self.philosopher_name} eat noodle')
+        print(f'philosopher {self.philosopher_num} eat noodle')
 
     def _putLeftFork(self):
         self.fork_locks[self.left_fork_num].release()
         self.q.put([self.philosopher_num, 1, 2])
-        print(f'{self.philosopher_name} putLeftFork')
+        print(f'philosopher {self.philosopher_num} putLeftFork')
 
     def _putRightFork(self):
         self.fork_locks[self.right_fork_num].release()
         self.q.put([self.philosopher_num, 2, 2])
-        print(f'{self.philosopher_name} putRightFork')
+        print(f'philosopher {self.philosopher_num} putRightFork')
 
 
 def main():

@@ -29,7 +29,6 @@ class DiningPhilosopher(threading.Thread):
     def __init__(self, philosopher, fork_locks, q, eat_times=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.philosopher_num = philosopher
-        self.philosopher_name = f'哲学家{philosopher}'
         self.fork_locks = fork_locks
         self.q = q
         self.eat_times = eat_times
@@ -71,32 +70,28 @@ class DiningPhilosopher(threading.Thread):
     def _pickLeftFork(self):
         self.fork_locks[self.left_fork_num].acquire()
         self.q.put([self.philosopher_num, 1, 1])
-        # print(f'{self.philosopher_name} pickLeftFork')
-        print(f'fork {self.left_fork_num} is using')
+        print(f'philosopher {self.philosopher_num} pickLeftFork')
 
     def _pickRightFork(self):
         self.fork_locks[self.right_fork_num].acquire()
         self.q.put([self.philosopher_num, 2, 1])
-        # print(f'{self.philosopher_name} pickRightFork')
-        print(f'fork {self.right_fork_num} is using')
+        print(f'philosopher {self.philosopher_num} pickRightFork')
 
     def _eat(self):
         eat_time = random.randint(1, 3) / 100
         time.sleep(eat_time)
         self.q.put([self.philosopher_num, 0, 3])
-        print(f'{self.philosopher_name} eat noodle')
+        print(f'philosopher {self.philosopher_num} eat noodle')
 
     def _putLeftFork(self):
         self.fork_locks[self.left_fork_num].release()
         self.q.put([self.philosopher_num, 1, 2])
-        # print(f'{self.philosopher_name} putLeftFork')
-        print(f'fork {self.left_fork_num} is back')
+        print(f'philosopher {self.philosopher_num} putLeftFork')
 
     def _putRightFork(self):
         self.fork_locks[self.right_fork_num].release()
         self.q.put([self.philosopher_num, 2, 2])
-        # print(f'{self.philosopher_name} putRightFork')
-        print(f'fork {self.right_fork_num} is back')
+        print(f'philosopher {self.philosopher_num} putRightFork')
 
 
 def main(philosopher_num):
