@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+@author : Yx
+"""
+
 # # 示例代码
 # import threading
 # class DiningPhilosophers:
@@ -14,6 +19,8 @@
 #       eat(),
 #       putLeftFork(),
 #       putRightFork())
+# 参考waiter模式，
+
 import queue
 import threading
 import time
@@ -21,15 +28,16 @@ import random
 
 
 class DiningPhilosopher(threading.Thread):
-    def __init__(self, philosopher, fork_locks, q, eat_times=1, *args, **kwargs):
+    def __init__(self, philosopher, fork_locks, fork_status, q, eat_times=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.philosopher_num = philosopher
-        self.philosopher_name = f'哲学家{philosopher}'
+        # self.philosopher_name = f'哲学家{philosopher}'
         self.fork_locks = fork_locks
+        self.fork_status = fork_status
         self.q = q
         self.eat_times = eat_times
-        self.left_fork_num = self.philosopher_num % 5
-        self.right_fork_num = (self.philosopher_num + 1) % 5
+        self.left_fork_num = self.philosopher_num % len(fork_locks)
+        self.right_fork_num = (self.philosopher_num + 1) % len(fork_locks)
 
     def wantsToEat(self, *actions):
         [action() for action in actions]
@@ -38,58 +46,64 @@ class DiningPhilosopher(threading.Thread):
         current_time = 1
         self.think()
         while current_time <= self.eat_times:
-            self.wantsToEat(
-                self._pickLeftFork,
-                self._pickRightFork,
-                self._eat,
-                self._putLeftFork,
-                self._putRightFork
-            )
-            current_time += 1
+            # 如果同时举起左侧Fork (0,0),(1,1),(2,2),(3,3),(4,4) -> 产生死锁
+            # 判断左右叉子状态后，决定是否吃
+            if not self.fork_status[self.left_fork_num] and not self.fork_status[self.right_fork_num]:
+                self.wantsToEat(
+                    self._pickLeftFork,
+                    self._pickRightFork,
+                    self._eat,
+                    self._putLeftFork,
+                    self._putRightFork
+                )
+                current_time += 1
+            self.think()
 
     def think(self):
-        think_time = random.randint(1, 5) / 10
+        think_time = random.randint(1, 5) / 100
         time.sleep(think_time)
 
     def _pickLeftFork(self):
+        self.fork_status[self.left_fork_num] = True
         self.fork_locks[self.left_fork_num].acquire()
-        self.q.put([self.philosopher_num, self.left_fork_num, 1])
-        print(f'{self.philosopher_name} pickLeftFork')
+        self.q.put([self.philosopher_num, 1, 1])
 
     def _pickRightFork(self):
+        self.fork_status[self.right_fork_num] = True
         self.fork_locks[self.right_fork_num].acquire()
-        self.q.put([self.philosopher_num, self.right_fork_num, 1])
-        print(f'{self.philosopher_name} pickRightFork')
+        self.q.put([self.philosopher_num, 2, 1])
 
     def _eat(self):
-        eat_time = random.randint(1, 3) / 10
+        eat_time = random.randint(1, 3) / 100
         time.sleep(eat_time)
         self.q.put([self.philosopher_num, 0, 3])
-        print(f'{self.philosopher_name} eat noodle')
+        print(f'philosopher {self.philosopher_num} eat noodle')
 
     def _putLeftFork(self):
         self.fork_locks[self.left_fork_num].release()
-        self.q.put([self.philosopher_num, self.left_fork_num, 2])
-        print(f'{self.philosopher_name} putLeftFork')
+        self.fork_status[self.left_fork_num] = False
+        self.q.put([self.philosopher_num, 1, 2])
 
     def _putRightFork(self):
         self.fork_locks[self.right_fork_num].release()
-        self.q.put([self.philosopher_num, self.right_fork_num, 2])
-        print(f'{self.philosopher_name} putRightFork')
+        self.fork_status[self.right_fork_num] = False
+        self.q.put([self.philosopher_num, 2, 2])
 
 
-def main():
+def main(philosopher_num):
     threads = []
     fork_locks = []
     result = []
     q = queue.Queue()
-    for i in range(5):
+    for i in range(philosopher_num):
         fork_lock = threading.Lock()
         fork_locks.append(fork_lock)
     eat_times = 5
 
-    for i in range(5):
-        t = DiningPhilosopher(i, q=q, fork_locks=fork_locks, eat_times=eat_times)
+    fork_status = [False] * len(fork_locks)
+
+    for i in range(philosopher_num):
+        t = DiningPhilosopher(i, q=q, fork_locks=fork_locks, fork_status=fork_status, eat_times=eat_times)
         threads.append(t)
 
     for t in threads:
@@ -106,4 +120,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(5)
