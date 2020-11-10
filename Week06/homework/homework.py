@@ -37,7 +37,9 @@ class Animal(metaclass=ABCMeta):
         pass
 
 
-class Cat(Animal):
+class SomeAnimal(Animal):
+    call = ''
+
     def __init__(self, name, type, size, disposition):
         self._name = name
         self._type = type
@@ -88,10 +90,12 @@ class Cat(Animal):
             return False
         return True
 
+
+class Cat(SomeAnimal):
     call = '喵喵喵'
 
 
-class Dog(Cat):
+class Dog(SomeAnimal):
     call = '汪汪汪'
 
 
