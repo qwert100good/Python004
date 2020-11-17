@@ -116,7 +116,7 @@ class Zoo(object):
         return self._name
 
     def add_animal(self, animal):
-        if not self.__getattr__(animal.__class__.__name__):
+        if not self.__getattr__(animal.__class__.__name__) and isinstance(animal, Animal):
             self.__setattr__(animal.__class__.__name__, animal)
 
 
