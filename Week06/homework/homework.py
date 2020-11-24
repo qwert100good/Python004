@@ -90,6 +90,9 @@ class SomeAnimal(Animal):
             return False
         return True
 
+    def __repr__(self):
+        return self._name
+
 
 class Cat(SomeAnimal):
     call = '喵喵喵'
@@ -117,7 +120,8 @@ class Zoo(object):
 
     def add_animal(self, animal):
         if not self.__getattr__(animal.__class__.__name__) and isinstance(animal, Animal):
-            self.__setattr__(animal.__class__.__name__, animal)
+            self.__setattr__(animal.__class__.__name__, [])
+        self.__getattr__(animal.__class__.__name__).append(animal)
 
 
 if __name__ == '__main__':
@@ -133,11 +137,14 @@ if __name__ == '__main__':
     # 动物园是否有猫这种动物
     have_cat = hasattr(z, 'Cat')
     have_dog = hasattr(z, 'Dog')
-    print(f'动物园有猫 {have_cat} {z.Cat.name}')
-    print(f'动物园有狗 {have_dog} {z.Dog.name}')
-    print(z.Cat.call)
-    print(z.Dog.call)
-    print(f'Cat 是凶猛动物 {z.Cat.is_fierce_animal}')
-    print(f'Cat 是宠物 {z.Cat.is_pet}')
-    print(f'Dog 是凶猛动物 {z.Dog.is_fierce_animal}')
-    print(f'Dog 是宠物 {z.Dog.is_pet}')
+    print(f'动物园有猫 {have_cat} {z.Cat}')
+    print(f'动物园有狗 {have_dog} {z.Dog}')
+    for cat in z.Cat:
+        print(f'{cat.name} {cat.call}')
+        print(f'{cat.name} 是凶猛动物 {cat.is_fierce_animal}')
+        print(f'{cat.name} {cat.is_pet}')
+
+    for dog in z.Dog:
+        print(f'{dog.name} {dog.call}')
+        print(f'{dog.name} 是凶猛动物 {dog.is_fierce_animal}')
+        print(f'{dog.name} 是宠物 {dog.is_pet}')
