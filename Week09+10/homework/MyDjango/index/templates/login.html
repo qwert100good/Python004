@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录</title>
+</head>
+<body>
+<form action="/login/" method="post">
+    {% csrf_token %}
+    {% for field in form %}
+        <div class="fieldWrapper">
+            {{ field.label_tag }} {{ field }}
+            {% for error in field.errors %}
+                <span class="error">{{ error }}</span>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <div style="margin-top: 10px">
+        <button><a href="/register/" class="button">注册</a></button>
+        <input type="submit" value="登录">
+    </div>
+</form>
+</body>
+<style>
+    .button {
+        text-decoration: none;
+    }
+
+    .error {
+        color: red;
+        font-size: small;
+    }
+
+    .fieldWrapper {
+        margin-top: 10px;
+    }
+</style>
+</html>
